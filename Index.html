@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madrasa Bill & Database System</title>
+    
+    <!-- Custom App Icon & PWA Manifest Settings -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" content="#2c3e50">
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
+      %22name%22: %22Developed by MHA%22 ,
+      %22short_name%22: %22Madrasa Bill%22,
+      %22start_url%22: %22.%22,
+      %22display%22: %22standalone%22,
+      %22background_color%22: %22%23f0f2f5%22,
+      %22theme_color%22: %22%232c3e50%22,
+      %22icons%22: [
+        {
+          %22src%22: %22icon.png%22,
+          %22sizes%22: %22512x512%22,
+          %22type%22: %22image/png%22
+        }
+      ]
+    }">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #000;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background-color: #bdc3c7;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .tab-btn.active {
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .form-group input, .form-group select {
+            padding: 7px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            font-size: 13px;
+        }
+
+        .btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Noto Nastaliq Urdu', Arial, sans-serif;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background-color: #219653;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        table.data-table th, table.data-table td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: center;
+        }
+
+        table.data-table th {
+            background-color: #f3d1b0;
+            color: #000;
+        }
+
+        .summary-box {
+            margin-top: 15px;
+            background: #fdf3e6;
+            border: 1px solid #f3d1b0;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            line-height: 2.2;
+        }
+
+        .summary-box h4 {
+            margin-bottom: 8px;
+            color: #d35400;
+            font-size: 14px;
+        }
+
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            max-width: 350px;
+            border-bottom: 1px dashed #e0c2a0;
+            padding-bottom: 2px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        /* Strict A4 Page layout with exact dimensions to guarantee 4 bills per page */
+        .page-container {
+            width: 210mm;
+            height: 297mm;
+            max-height: 297mm;
+            margin: 0 auto;
+            background: white;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            padding: 6mm;
+            gap: 4mm;
+            page-break-after: always;
+            page-break-inside: avoid;
+            overflow: hidden;
+        }
+
+        .bill-card {
+            border: 1px solid #000;
+            padding: 3mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #fff;
+            height: 132mm; /* Exactly half of printable height */
+            max-height: 132mm;
+            overflow: hidden;
+        }
+
+        .bill-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+            margin-bottom: 2px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 1px;
+        }
+
+        .bill-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 8px;
+            margin-bottom: 1px;
+            font-weight: bold;
+        }
+
+        .bill-moarif {
+            font-size: 8px;
+            margin-bottom: 2px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 1px;
+            font-weight: bold;
+        }
+
+        table.bill-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.5px;
+            margin-bottom: 2px;
+        }
+
+        table.bill-table th, table.bill-table td {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 1px 2px;
+        }
+
+        table.bill-table th {
+            background-color: #f3d1b0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            font-weight: bold;
+        }
+
+        .total-row {
+            background-color: #f3d1b0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            font-weight: bold;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2px;
+            font-size: 7.5px;
+            font-weight: bold;
+            padding-top: 1px;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+            body {
+                background: none;
+                padding: 0;
+            }
+            .no-print, .tabs, .modal-header-actions, .floating-down-btn {
+                display: none !important;
+            }
+            .modal {
+                position: static;
+                background: none;
+                padding: 0;
+            }
+            .modal-content-area {
+                display: block;
+            }
+            .page-container {
+                box-shadow: none;
+                margin: 0;
+                width: 210mm;
+                height: 297mm;
+                max-height: 297mm;
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+            * {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Password Login Screen -->
+    <div id="loginScreen" class="container" style="max-width: 400px; margin-top: 80px; display: none;">
+        <h3>لاگ ان (Password Protected)</h3>
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>پاسورڈ درج کریں:</label>
+            <input type="password" id="loginPassword" placeholder="پاسورڈ لکھیں">
+        </div>
+        <button class="btn" style="width: 100%;" onclick="checkLogin()">داخل ہوں</button>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="mainApp" class="container no-print">
+        <h2>مدرسہ بل اور ڈیٹا بیس سسٹم</h2>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('entryTab')">روزانہ انٹری</button>
+            <button class="tab-btn" onclick="switchTab('dbTab')">ڈیٹا بیس اور بل</button>
+            <button class="tab-btn" onclick="switchTab('settingsTab')">سیٹنگز (Settings)</button>
+        </div>
+
+        <!-- Daily Entry Tab -->
+        <div id="entryTab" class="section-content active">
+            <h3>نیا خرچہ درج کریں</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>تاریخ:</label>
+                    <input type="date" id="entryDate">
+                </div>
+                <div class="form-group">
+                    <label>نام اشیاء:</label>
+                    <input type="text" id="entryItem" placeholder="مثال: گوشت">
+                </div>
+                <div class="form-group">
+                    <label>مد (Dropdown):</label>
+                    <select id="entryMod">
+                        <option value="">-- مد منتخب کریں --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>قیمت:</label>
+                    <input type="number" id="entryPrice" placeholder="مثال: 300">
+                </div>
+            </div>
+            <button class="btn" onclick="addEntry()">انٹری محفوظ کریں</button>
+        </div>
+
+        <!-- Database Tab -->
+        <div id="dbTab" class="section-content">
+            <h3>خرچہ کا ریکارڈ اور بل جنریشن</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>از تاریخ:</label>
+                    <input type="date" id="filterStartDate">
+                </div>
+                <div class="form-group">
+                    <label>تا تاریخ:</label>
+                    <input type="date" id="filterEndDate">
+                </div>
+                <div class="form-group">
+                    <label>مد کے لحاظ سے فلٹر:</label>
+                    <select id="filterMod">
+                        <option value="">-- تمام مدات --</option>
+                    </select>
+                </div>
+                <div class="form-group" style="justify-content: flex-end;">
+                    <button class="btn" style="background-color: #2980b9;" onclick="filterData()">فلٹر کریں</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <button class="btn" style="background-color: #e67e22;" onclick="openPdfModal()">PDF / بل پرنٹ کریں (10 Items/Bill)</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>تاریخ</th>
+                        <th>نام اشیاء</th>
+                        <th>مد</th>
+                        <th>قیمت</th>
+                        <th>عمل</th>
+                    </tr>
+                </thead>
+                <tbody id="dbTableBody"></tbody>
+            </table>
+
+            <!-- Summary Box for Filtered Total & Category Totals -->
+            <div class="summary-box" id="summaryBox">
+                <h4>فلٹر شدہ خلاصہ (Summary):</h4>
+                <div id="summaryContent">کل خرچہ: 0</div>
+            </div>
+
+            <!-- Scroll to Bottom Anchor Point -->
+            <div id="bottomAnchor"></div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="section-content">
+            <h3>سسٹم اور بل سیٹنگز</h3>
+            
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>نئی مد (Category) شامل کریں:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="newModInput" placeholder="مثال: مطبخ، سفر، تعمیر">
+                    <button class="btn" style="background-color: #27ae60;" onclick="addCategory()">مد شامل کریں</button>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>موجودہ مدات کی فہرست:</label>
+                <div id="modListContainer" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;"></div>
+            </div>
+
+            <hr style="margin: 15px 0;">
+
+            <!-- Data Backup & Restore Section -->
+            <h3>ڈیٹا بیک اپ (Export / Import)</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <button class="btn" style="background-color: #2980b9;" onclick="exportDataFile()">بیک اپ فائل ڈاؤن لوڈ کریں (Export)</button>
+                
+                <div style="display: inline-flex; align-items: center; gap: 5px;">
+                    <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importDataFile(event)">
+                    <button class="btn" style="background-color: #8e44ad;" onclick="document.getElementById('importFile').click()">بیک اپ امپورٹ کریں (Import)</button>
+                </div>
+            </div>
+
+            <hr style="margin: 15px 0;">
+
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>بل کی ہیڈنگ (Bill Heading):</label>
+                <input type="text" id="settingBillHeading" value="بل بنام دارالعلوم رحمانیہ سلیالو کوریگام قاضی گنڈ">
+            </div>
+            <button class="btn" style="background-color: #2980b9; margin-bottom: 20px;" onclick="saveHeading()">ہیڈنگ محفوظ کریں</button>
+
+            <hr style="margin: 15px 0;">
+
+            <h3>پاسورڈ سیٹنگز</h3>
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label>موجودہ پاسورڈ (Current Password):</label>
+                <input type="password" id="currentPassword" placeholder="پرانا پاسورڈ درج کریں">
+            </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>نیا پاسورڈ (خالی چھوڑنے پر پاسورڈ آف ہو جائے گا):</label>
+                <input type="password" id="newPassword" placeholder="نیا پاسورڈ درج کریں">
+            </div>
+            <button class="btn" style="background-color: #8e44ad; margin-bottom: 20px;" onclick="changePassword()">پاسورڈ تبدیل/آف کریں</button>
+            
+            <hr style="margin: 15px 0;">
+
+            <h3>فیکٹری ری سیٹ (Admin Reset)</h3>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label>ADMIN پاسورڈ درج کریں (ڈیٹا صاف کرنے کے لیے):</label>
+                <input type="password" id="adminPassword" placeholder="ADMIN پاسورڈ">
+            </div>
+            <button class="btn btn-danger" onclick="adminReset()" style="margin-bottom: 15px;">تمام ڈیٹا ری سیٹ (Delete All) کریں</button>
+
+            <!-- Watermark Added at the bottom of Settings -->
+            <div style="text-align: center; margin-top: 25px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 12px; color: #7f8c8d; font-weight: bold;">
+                Developed by MHA
+            </div>
+        </div>
+    </div>
+
+    <!-- ChatGPT Style Floating Centered Down Arrow Button (Only visible on Database tab after scrolling) -->
+    <button id="floatingDownBtn" class="floating-down-btn no-print" onclick="scrollToBottom()" style="display: none; position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 999; background-color: rgba(44, 62, 80, 0.9); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.25); align-items: center; justify-content: center; transition: background 0.2s;">
+        ↓
+    </button>
+
+    <!-- PDF Generation Options Modal -->
+    <div id="pdfModal" class="modal">
+        <div class="container" style="max-width: 450px; margin: 40px auto;">
+            <h3>بل جنریشن کی تفصیلات</h3>
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label>از تاریخ:</label>
+                <input type="date" id="pdfStartDate">
+            </div>
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label>تا تاریخ:</label>
+                <input type="date" id="pdfEndDate">
+            </div>
+            <div class="form-group" style="margin-bottom: 10px;">
+                <label>معرفت:</label>
+                <input type="text" id="pdfMoarif" value="حافظ اعجاز سلیمان صاحب مدرس مدرسہ">
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>شروع بل نمبر (Start Bill No):</label>
+                <input type="number" id="pdfStartBillNo" value="1">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-danger" onclick="closePdfModal()">منسوخ کریں</button>
+                <button class="btn" onclick="generateBillsPDF()">بل دیکھیں / پرنٹ کریں</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generated Bills Preview Modal -->
+    <div id="billPreviewModal" class="modal" style="background: rgba(0,0,0,0.8);">
+        <div class="modal-header-actions" style="text-align: right; padding: 10px; background: #2c3e50; max-width: 950px; margin: 0 auto; border-radius: 6px 6px 0 0;">
+            <button class="btn btn-danger" onclick="closeBillPreview()">بند کریں</button>
+            <button class="btn" style="background-color: #27ae60; margin-right: 10px;" onclick="window.print()">پرنٹ / رنگین PDF ڈاؤن لوڈ کریں</button>
+        </div>
+        <div id="billsArea" class="modal-content-area" style="background: #555; padding: 10px;"></div>
+    </div>
+
+    <script>
+        let database = JSON.parse(localStorage.getItem('madrasa_db')) || [];
+        let categories = JSON.parse(localStorage.getItem('madrasa_cats')) || ["مطبخ", "سفر", "تعمیر", "كتب خانہ"];
+        let appPassword = localStorage.getItem('madrasa_pass') || '';
+        let customHeading = localStorage.getItem('madrasa_heading') || 'بل بنام دارالعلوم رحمانیہ سلیالو کوریگام قاضی گنڈ';
+
+        document.getElementById('entryDate').valueAsDate = new Date();
+        document.getElementById('settingBillHeading').value = customHeading;
+
+        window.onload = function() {
+            if(appPassword && appPassword !== '') {
+                document.getElementById('loginScreen').style.display = 'block';
+                document.getElementById('mainApp').style.display = 'none';
+            } else {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                renderTable(database);
+                updateCategoryDropdowns();
+            }
+        };
+
+        // Scroll listener to show/hide button based on scroll position
+        window.onscroll = function() {
+            let dbTabActive = document.getElementById('dbTab').classList.contains('active');
+            let floatingBtn = document.getElementById('floatingDownBtn');
+            if (dbTabActive) {
+                // Show if scrolled down more than 150 pixels, hide if near top
+                if (window.scrollY > 150) {
+                    floatingBtn.style.display = 'flex';
+                } else {
+                    floatingBtn.style.display = 'none';
+                }
+            } else {
+                floatingBtn.style.display = 'none';
+            }
+        };
+
+        function checkLogin() {
+            let pass = document.getElementById('loginPassword').value;
+            if(pass === appPassword) {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                renderTable(database);
+                updateCategoryDropdowns();
+            } else {
+                alert('غلط پاسورڈ! دوبارہ کوشش کریں۔');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section-content').forEach(content => content.classList.remove('active'));
+            
+            let floatingBtn = document.getElementById('floatingDownBtn');
+
+            if(tabId === 'entryTab') {
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+                document.getElementById('entryTab').classList.add('active');
+                updateCategoryDropdowns();
+                floatingBtn.style.display = 'none';
+            } else if(tabId === 'dbTab') {
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                document.getElementById('dbTab').classList.add('active');
+                updateCategoryDropdowns();
+                renderTable(database);
+                // Check initial scroll position when switching to DB tab
+                if (window.scrollY > 150) {
+                    floatingBtn.style.display = 'flex';
+                } else {
+                    floatingBtn.style.display = 'none';
+                }
+            } else {
+                document.querySelectorAll('.tab-btn')[2].classList.add('active');
+                document.getElementById('settingsTab').classList.add('active');
+                renderCategoryList();
+                floatingBtn.style.display = 'none';
+            }
+        }
+
+        function scrollToBottom() {
+            document.getElementById('bottomAnchor').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateCategoryDropdowns() {
+            let select = document.getElementById('entryMod');
+            select.innerHTML = '<option value="">-- مد منتخب کریں --</option>';
+            categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+
+            let filterSelect = document.getElementById('filterMod');
+            let currentFilterVal = filterSelect.value;
+            filterSelect.innerHTML = '<option value="">-- تمام مدات --</option>';
+            categories.forEach(cat => {
+                let selected = (cat === currentFilterVal) ? 'selected' : '';
+                filterSelect.innerHTML += `<option value="${cat}" ${selected}>${cat}</option>`;
+            });
+        }
+
+        function addCategory() {
+            let catInput = document.getElementById('newModInput');
+            let catName = catInput.value.trim();
+            if(!catName) {
+                alert('براہ کرم مد کا نام درج کریں!');
+                return;
+            }
+            if(categories.includes(catName)) {
+                alert('یہ مد پہلے سے موجود ہے!');
+                return;
+            }
+            categories.push(catName);
+            localStorage.setItem('madrasa_cats', JSON.stringify(categories));
+            catInput.value = '';
+            renderCategoryList();
+            updateCategoryDropdowns();
+            alert('مد کامیابی سے شامل ہو گئی!');
+        }
+
+        function renderCategoryList() {
+            let container = document.getElementById('modListContainer');
+            container.innerHTML = '';
+            categories.forEach((cat, index) => {
+                container.innerHTML += `
+                    <span style="background: #e2e8f0; padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px;">
+                        ${cat} 
+                        <button onclick="deleteCategory(${index})" style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 16px; height: 16px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;">&times;</button>
+                    </span>
+                `;
+            });
+        }
+
+        function deleteCategory(index) {
+            if(confirm('کیا آپ اس مد کو حذف کرنا چاہتے ہیں؟')) {
+                categories.splice(index, 1);
+                localStorage.setItem('madrasa_cats', JSON.stringify(categories));
+                renderCategoryList();
+                updateCategoryDropdowns();
+            }
+        }
+
+        function addEntry() {
+            let date = document.getElementById('entryDate').value;
+            let item = document.getElementById('entryItem').value;
+            let mod = document.getElementById('entryMod').value;
+            let price = parseFloat(document.getElementById('entryPrice').value);
+
+            if(!date || !item || !mod || isNaN(price)) {
+                alert('براہ کرم تمام خانے اچھے سے پُر کریں!');
+                return;
+            }
+
+            database.push({ date, item, mod, price });
+            database.sort((a, b) => new Date(a.date) - new Date(b.date));
+            localStorage.setItem('madrasa_db', JSON.stringify(database));
+            
+            document.getElementById('entryItem').value = '';
+            document.getElementById('entryPrice').value = '';
+            alert('انٹری کامیابی کے ساتھ محفوظ ہو گئی!');
+        }
+
+        function renderTable(data) {
+            let sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+            let tbody = document.getElementById('dbTableBody');
+            tbody.innerHTML = '';
+            
+            let grandTotal = 0;
+            let modTotals = {};
+
+            sortedData.forEach((row, index) => {
+                let p = parseFloat(row.price) || 0;
+                grandTotal += p;
+                if(!modTotals[row.mod]) {
+                    modTotals[row.mod] = 0;
+                }
+                modTotals[row.mod] += p;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${row.date}</td>
+                        <td>${row.item}</td>
+                        <td>${row.mod}</td>
+                        <td>${row.price}</td>
+                        <td><button class="btn btn-danger" onclick="deleteEntry('${row.date}', '${row.item}')">حذف</button></td>
+                    </tr>
+                `;
+            });
+
+            let summaryHtml = `<div class="summary-line"><span>کل خرچہ:</span> <span><strong>${grandTotal} روپے</strong></span></div>`;
+            for(let m in modTotals) {
+                summaryHtml += `<div class="summary-line"><span>${m}:</span> <span><strong>${modTotals[m]} روپے</strong></span></div>`;
+            }
+            document.getElementById('summaryContent').innerHTML = summaryHtml;
+        }
+
+        function deleteEntry(date, item) {
+            if(confirm('کیا آپ واقعی اس انٹری کو حذف کرنا چاہتے ہیں؟')) {
+                database = database.filter(row => !(row.date === date && row.item === item));
+                localStorage.setItem('madrasa_db', JSON.stringify(database));
+                filterData();
+            }
+        }
+
+        function filterData() {
+            let start = document.getElementById('filterStartDate').value;
+            let end = document.getElementById('filterEndDate').value;
+            let selectedMod = document.getElementById('filterMod').value;
+
+            let filtered = database.filter(row => {
+                if(start && row.date < start) return false;
+                if(end && row.date > end) return false;
+                if(selectedMod && row.mod !== selectedMod) return false;
+                return true;
+            });
+            renderTable(filtered);
+        }
+
+        // --- EXPORT (BACKUP) FUNCTION ---
+        function exportDataFile() {
+            let backupData = {
+                database: database,
+                categories: categories,
+                customHeading: customHeading
+            };
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "madrasa_backup_" + new Date().toISOString().slice(0,10) + ".json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // --- IMPORT (RESTORE) FUNCTION ---
+        function importDataFile(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let importedObj = JSON.parse(e.target.result);
+                    if (importedObj.database && Array.isArray(importedObj.database)) {
+                        if (confirm('کیا آپ اس بیک اپ فائل سے ڈیٹا امپورٹ کرنا چاہتے ہیں؟ (اس سے موجودہ ڈیٹا میں نیا ڈیٹا شامل ہو جائے گا)')) {
+                            database = importedObj.database;
+                            localStorage.setItem('madrasa_db', JSON.stringify(database));
+
+                            if (importedObj.categories && Array.isArray(importedObj.categories)) {
+                                categories = importedObj.categories;
+                                localStorage.setItem('madrasa_cats', JSON.stringify(categories));
+                            }
+
+                            if (importedObj.customHeading) {
+                                customHeading = importedObj.customHeading;
+                                localStorage.setItem('madrasa_heading', customHeading);
+                                document.getElementById('settingBillHeading').value = customHeading;
+                            }
+
+                            renderTable(database);
+                            updateCategoryDropdowns();
+                            alert('ڈویلپر / بیک اپ فائل کامیابی سے امپورٹ ہو گئی ہے!');
+                        }
+                    } else {
+                        alert('غلط فائل فارمیٹ! براہ کرم درست بیک اپ فائل منتخب کریں۔');
+                    }
+                } catch (err) {
+                    alert('فائل پڑھنے میں خرابی پیش آئی!');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input
+        }
+
+        function saveHeading() {
+            let heading = document.getElementById('settingBillHeading').value;
+            if(!heading) {
+                alert('ہیڈنگ خالی نہیں ہو سکتی!');
+                return;
+            }
+            customHeading = heading;
+            localStorage.setItem('madrasa_heading', customHeading);
+            alert('بل کی ہیڈنگ کامیابی سے محفوظ کر دی گئی ہے!');
+        }
+
+        function changePassword() {
+            let currentInput = document.getElementById('currentPassword').value;
+            let newPass = document.getElementById('newPassword').value;
+
+            if(appPassword && appPassword !== '') {
+                if(currentInput !== appPassword) {
+                    alert('موجودہ پاسورڈ غلط ہے!');
+                    return;
+                }
+            }
+
+            if(newPass === '') {
+                appPassword = '';
+                localStorage.removeItem('madrasa_pass');
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                alert('پاسورڈ کامیابی سے آف کر دیا گیا ہے!');
+            } else {
+                appPassword = newPass;
+                localStorage.setItem('madrasa_pass', appPassword);
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                alert('نیا پاسورڈ کامیابی سے سیٹ ہو گیا ہے!');
+            }
+        }
+
+        function adminReset() {
+            let admPass = document.getElementById('adminPassword').value;
+            if(admPass === 'ADMIN') {
+                if(confirm('کیا آپ تمام ڈیٹا، پاسورڈ اور انٹریز کو مکمل ختم کرنا چاہتے ہیں؟')) {
+                    database = [];
+                    appPassword = '';
+                    customHeading = 'بل بنام دارالعلوم رحمانیہ سلیالو کوریگام قاضی گنڈ';
+                    categories = ["مطبخ", "سفر", "تعمیر", "كتب خانہ"];
+                    localStorage.removeItem('madrasa_db');
+                    localStorage.removeItem('madrasa_pass');
+                    localStorage.removeItem('madrasa_heading');
+                    localStorage.removeItem('madrasa_cats');
+                    renderTable(database);
+                    alert('تمام ڈیٹا ری سیٹ کر دیا گیا ہے!');
+                    location.reload();
+                }
+            } else {
+                alert('غلط ADMIN پاسورڈ!');
+            }
+        }
+
+        function openPdfModal() {
+            document.getElementById('pdfModal').style.display = 'block';
+        }
+
+        function closePdfModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+        }
+
+        function closeBillPreview() {
+            document.getElementById('billPreviewModal').style.display = 'none';
+        }
+
+        function generateBillsPDF() {
+            let start = document.getElementById('pdfStartDate').value;
+            let end = document.getElementById('pdfEndDate').value;
+            let moarif = document.getElementById('pdfMoarif').value;
+            let startBillNo = parseInt(document.getElementById('pdfStartBillNo').value) || 1;
+
+            let filtered = database.filter(row => {
+                if(start && row.date < start) return false;
+                if(end && row.date > end) return false;
+                return true;
+            });
+
+            if(filtered.length === 0) {
+                alert('منتخب کردہ تاریخوں میں کوئی ڈیٹا موجود نہیں ہے!');
+                return;
+            }
+
+            filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            closePdfModal();
+
+            let itemChunks = [];
+            for (let i = 0; i < filtered.length; i += 10) {
+                itemChunks.push(filtered.slice(i, i + 10));
+            }
+
+            let billsArea = document.getElementById('billsArea');
+            billsArea.innerHTML = '';
+
+            for (let pIdx = 0; pIdx < itemChunks.length; pIdx += 4) {
+                let pageContainer = document.createElement('div');
+                pageContainer.className = 'page-container';
+
+                for (let b = 0; b < 4; b++) {
+                    let chunkIndex = pIdx + b;
+                    if (chunkIndex < itemChunks.length) {
+                        let chunk = itemChunks[chunkIndex];
+                        let currentBillNo = startBillNo + chunkIndex;
+                        let title = customHeading;
+
+                        let categoryTotals = {};
+                        let totalPrice = 0;
+
+                        chunk.forEach(item => {
+                            let p = parseFloat(item.price) || 0;
+                            totalPrice += p;
+                            if(!categoryTotals[item.mod]) {
+                                categoryTotals[item.mod] = 0;
+                            }
+                            categoryTotals[item.mod] += p;
+                        });
+
+                        let mods = Object.keys(categoryTotals);
+                        let amounts = Object.values(categoryTotals);
+
+                        let tableRows = '';
+                        for (let i = 0; i < 10; i++) {
+                            let npMod = mods[i] !== undefined ? mods[i] : '';
+                            let npAmount = amounts[i] !== undefined ? amounts[i] : '';
+                            
+                            if (i < chunk.length) {
+                                let item = chunk[i];
+                                tableRows += `
+                                    <tr>
+                                        <td>${item.date}</td>
+                                        <td>${item.item}</td>
+                                        <td>${item.mod}</td>
+                                        <td>${item.price}</td>
+                                        <td>${npMod}</td>
+                                        <td>${npAmount}</td>
+                                    </tr>
+                                `;
+                            } else {
+                                tableRows += `
+                                    <tr>
+                                        <td>&nbsp;</td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td>${npMod}</td>
+                                        <td>${npAmount}</td>
+                                    </tr>
+                                `;
+                            }
+                        }
+
+                        pageContainer.innerHTML += `
+                            <div class="bill-card">
+                                <div>
+                                    <div class="bill-header">${title}</div>
+                                    <div class="bill-meta">
+                                        <span>تاریخ اندراج دفتر: ........................</span>
+                                        <span>بل نمبر: ${currentBillNo}</span>
+                                    </div>
+                                    <div class="bill-moarif">معرفت: ${moarif}</div>
+                                    <table class="bill-table">
+                                        <thead>
+                                            <tr>
+                                                <th rowspan="2" style="width: 17%;">تاریخ</th>
+                                                <th rowspan="2" style="width: 27%;">نام اشیاء</th>
+                                                <th rowspan="2" style="width: 14%;">مد</th>
+                                                <th rowspan="2" style="width: 14%;">قیمت</th>
+                                                <th colspan="2" style="width: 28%;">میزان مدات</th>
+                                            </tr>
+                                            <tr>
+                                                <th style="width: 13%;">مد</th>
+                                                <th style="width: 15%;">میزان</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${tableRows}
+                                            <tr class="total-row">
+                                                <td colspan="3" style="text-align: right; padding-right: 4px;">کل میزان</td>
+                                                <td>${totalPrice}</td>
+                                                <td></td>
+                                                <td>${totalPrice}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="signatures">
+                                    <span>دستخط وصول کننده</span>
+                                    <span>دستخط ادا کننده</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        pageContainer.innerHTML += `<div class="bill-card" style="visibility: hidden;"></div>`;
+                    }
+                }
+                billsArea.appendChild(pageContainer);
+            }
+
+            document.getElementById('billPreviewModal').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
